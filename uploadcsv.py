@@ -5,11 +5,13 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome import service as fs
+from selenium.webdriver.support.select import Select
 from time import sleep
 import csv
 from datetime import datetime
 
-def upload_csv(csv_file, group)
+def upload_csv(csv_file, group):
 
   mf_url = "https://moneyforward.com/"
   mf_input_url = "https://moneyforward.com/cf#cf_new"
@@ -18,33 +20,36 @@ def upload_csv(csv_file, group)
 
   try:
     # Open Moneyforward
-    driver = webdriver.Chrome('./bin/chromedriver')
+    chrome_service = fs.Service(executable_path='/usr/local/bin/chromedriver')
+    driver = webdriver.Chrome(service=chrome_service)
     driver.implicitly_wait(10)
     driver.get(mf_url)
     driver.implicitly_wait(10)
-    elem = driver.find_elements_by_link_text("ログイン")
-    elem[0].click()
+    elem = driver.find_element(By.LINK_TEXT, 'ログイン')
+    elem.click()
     driver.implicitly_wait(10)
-    elem = driver.find_elements_by_link_text("メールアドレスでログイン")
-    elem[0].click()
+    elem = driver.find_element(By.LINK_TEXT, "メールアドレスでログイン")
+    elem.click()
     driver.implicitly_wait(10)
-  
+
     # Login to moneyforward
-    elem = driver.find_element_by_name("mfid_user[email]")
+    elem = driver.find_element(By.NAME, "mfid_user[email]")
     elem.clear()
     elem.send_keys(username)
     elem.submit()
     driver.implicitly_wait(10)
-    elem = driver.find_element_by_name("mfid_user[password]")
+    elem = driver.find_element(By.NAME, "mfid_user[password]")
     elem.clear()
     elem.send_keys(password)
     elem.submit()
 
     # Select group
-    elem = driver.find_element_by_id("group_id_hash").click()
-    sleep(1)
-    elem = driver.find_element_by_xpath("//a[text()='" + group + "' and @class='l_c_name']").click()
+    elem = driver.find_element(By.ID, "group_id_hash")
+    select=Select(elem)
+    select.select_by_visible_text(group)
     sleep(5)
+
+    driver.close() # for debug
 
     # Open CSV file
     f = open(csv_file, mode='r', encoding='utf-8')
@@ -60,9 +65,7 @@ def upload_csv(csv_file, group)
       if int(row[2]) > 0:
         # Move to income tab
         driver.find_element_by_class_name("plus-payment").click()
-      elif int(row[2]) < 0:
-        # Default is outcome tab
-      else:
+      elif int(row[2]) == 0:
         print("Price at row " + str(count) + " has invalid format!")
 
       elem = driver.find_element_by_id("appendedPrependedInput")
@@ -107,7 +110,7 @@ def upload_csv(csv_file, group)
 
     f.close()
     print(csv_file + "was successfully uploaded!")
-    driver.quit()
+    driver.close()
     return 0
 
   except ValueError:
