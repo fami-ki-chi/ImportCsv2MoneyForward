@@ -42,73 +42,68 @@ def upload_csv(csv_file, group):
     elem.clear()
     elem.send_keys(password)
     elem.submit()
+    driver.implicitly_wait(10)
 
     # Select group
     elem = driver.find_element(By.ID, "group_id_hash")
     select=Select(elem)
     select.select_by_visible_text(group)
-    sleep(5)
-
-    driver.close() # for debug
+    driver.implicitly_wait(10)
 
     # Open CSV file
-    f = open(csv_file, mode='r', encoding='utf-8')
-    reader = csv.reader(f)
-    driver.get(mf_input_url)
-    element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "submit-button")))
+    with open(csv_file, mode='r', encoding='utf-8') as f
+      reader = csv.reader(f)
+      driver.get(mf_input_url)
+      element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "submit-button")))
 
-    for row in reader:
+      for row in reader:
+        # row[x] = [YYYY/MM/DD, Content, Price, Large-category, Middle-category, Asset_name]
+        # Input Price
+        if int(row[2]) < 0:
+          # Move to income tab
+          driver.find_element(By.CLASS_NAME, "plus-payment").click()
+        elif int(row[2]) == 0:
+          print("Price at row " + str(count) + " has invalid format!")
 
-      # row[x] = [Date, Content, Price, Large-category, Middle-category, Asset_name]
+        elem = driver.find_element(By.ID, "appendedPrependedInput")
+        elem.clear()
+        elem.send_keys(abs(int(row[2])))
 
-      # Input Price
-      if int(row[2]) > 0:
-        # Move to income tab
-        driver.find_element_by_class_name("plus-payment").click()
-      elif int(row[2]) == 0:
-        print("Price at row " + str(count) + " has invalid format!")
+        # Input date
+        elem = driver.find_element(By.ID, "updated-at")
+        elem.clear()
+        elem.send_keys(row[0])
 
-      elem = driver.find_element_by_id("appendedPrependedInput")
-      elem.clear()
-      elem.send_keys(abs(int(row[2])))
+        # Select asset
+        elem = driver.find_element(By.ID, "user_asset_act_sub_account_id_hash")
+        select=Select(elem)
+        for option in select.options:
+          if row[5] in option.text
+            select.select_by_visible_text(option.text)
+        
+        # Input large-category
+        driver.find_element(By.ID, "js-large-category-selected").click()
+        sleep(1)
+        driver.find_element(By.XPATH, "//a[text()='" + row[3] + "' and @class='l_c_name']").click()
+        sleep(1)
 
-      # Input date
-      elem = driver.find_element_by_id("updated-at")
-      elem.clear()
-      elem.send_keys(row[0])
+        # Input middle-category
+        driver.find_element(By.ID, "js-middle-category-selected").click()
+        sleep(1)
+        driver.find_element(By.XPATH, "//a[text()='" + row[4] + "' and @class='m_c_name']").click()
+        sleep(1)
 
-      # Select asset
-      driver.find_element_by_id("user_asset_act_sub_account_id_hash").click()
-      sleep(1)
-      driver.find_element_by_xpath("//a[text()='" + row[5] + "' and @class='l_c_name']").click()
+        # Input content
+        elem = driver.find_element(By.ID, "js-content-field")
+        elem.clear()
+        elem.send_keys(row[1])
 
-      # Input large-category
-      driver.find_element_by_id("js-large-category-selected").click()
-      sleep(1)
-      driver.find_element_by_xpath("//a[text()='" + row[3] + "' and @class='l_c_name']").click()
-      sleep(1)
+        # Save
+        driver.find_element(By.ID, "submit-button").click()
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "confirmation-button")))
+        driver.find_element(By.ID, "confirmation-button").click()
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "submit-button")))
 
-      # Input middle-category
-      driver.find_element_by_id("js-middle-category-selected").click()
-      sleep(1)
-      driver.find_element_by_xpath("//a[text()='" + row[4] + "' and @class='m_c_name']").click()
-      sleep(1)
-
-      # Input content
-      elem = driver.find_element_by_id("js-content-field")
-      elem.clear()
-      elem.send_keys(row[1])
-
-      # Save
-      driver.find_element_by_id("submit-button").click()
-      WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "confirmation-button")))
-      driver.find_element_by_id("confirmation-button").click()
-      WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "submit-button")))
-      WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "plus-payment")))
-      
-      count+=1
-
-    f.close()
     print(csv_file + "was successfully uploaded!")
     driver.close()
     return 0
