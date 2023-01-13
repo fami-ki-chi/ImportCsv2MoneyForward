@@ -1,15 +1,13 @@
 # coding: UTF-8
 import sys
+import csv
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome import service as fs
 from selenium.webdriver.support.select import Select
 from time import sleep
-import csv
-from datetime import datetime
 
 def upload_csv(csv_file, group):
 
@@ -51,7 +49,7 @@ def upload_csv(csv_file, group):
     driver.implicitly_wait(10)
 
     # Open CSV file
-    with open(csv_file, mode='r', encoding='utf-8') as f
+    with open(csv_file, mode='r', encoding='utf-8') as f:
       reader = csv.reader(f)
       driver.get(mf_input_url)
       element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "submit-button")))
@@ -68,35 +66,44 @@ def upload_csv(csv_file, group):
         elem = driver.find_element(By.ID, "appendedPrependedInput")
         elem.clear()
         elem.send_keys(abs(int(row[2])))
+        sleep(1)
 
         # Input date
         elem = driver.find_element(By.ID, "updated-at")
         elem.clear()
         elem.send_keys(row[0])
+        elem.click()
+        sleep(1)
+        elem.click()
+        sleep(1)
 
         # Select asset
         elem = driver.find_element(By.ID, "user_asset_act_sub_account_id_hash")
         select=Select(elem)
         for option in select.options:
-          if row[5] in option.text
+          if row[5] in option.text:
             select.select_by_visible_text(option.text)
+        sleep(1)
         
         # Input large-category
-        driver.find_element(By.ID, "js-large-category-selected").click()
-        sleep(1)
-        driver.find_element(By.XPATH, "//a[text()='" + row[3] + "' and @class='l_c_name']").click()
-        sleep(1)
+        if row[3] != '':
+          driver.find_element(By.ID, "js-large-category-selected").click()
+          sleep(1)
+          driver.find_element(By.XPATH, "//a[text()='" + row[3] + "' and @class='l_c_name']").click()
+          sleep(1)
 
-        # Input middle-category
-        driver.find_element(By.ID, "js-middle-category-selected").click()
-        sleep(1)
-        driver.find_element(By.XPATH, "//a[text()='" + row[4] + "' and @class='m_c_name']").click()
-        sleep(1)
+          # Input middle-category
+          if row[4] != '':
+            driver.find_element(By.ID, "js-middle-category-selected").click()
+            sleep(1)
+            driver.find_element(By.XPATH, "//a[text()='" + row[4] + "' and @class='m_c_name']").click()
+            sleep(1)
 
         # Input content
         elem = driver.find_element(By.ID, "js-content-field")
         elem.clear()
         elem.send_keys(row[1])
+        sleep(1)
 
         # Save
         driver.find_element(By.ID, "submit-button").click()
@@ -104,7 +111,7 @@ def upload_csv(csv_file, group):
         driver.find_element(By.ID, "confirmation-button").click()
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "submit-button")))
 
-    print(csv_file + "was successfully uploaded!")
+    print(csv_file + " was uploaded!")
     driver.close()
     return 0
 
