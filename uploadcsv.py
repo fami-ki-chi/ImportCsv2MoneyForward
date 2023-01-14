@@ -111,6 +111,8 @@ def upload_csv(csv_file, group):
         driver.find_element(By.ID, "confirmation-button").click()
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "submit-button")))
 
+        print('  ' + str(row) + ' was uploaded.')
+
     print(csv_file + " was uploaded!")
     driver.close()
     return 0
